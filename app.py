@@ -129,6 +129,21 @@ def api_health():
     return jsonify({"status": "ok", "service": "pipeline-leak-detection"})
 
 
+@app.route("/api/docs")
+def api_docs():
+    return jsonify({
+        "openapi": "3.0.0",
+        "info": {"title": "Pipeline Leak Detection - Deteccion de Fugas", "version": "1.0.0"},
+        "paths": {
+            "/": {"get": {"summary": "Dashboard principal"}},
+            "/api/health": {"get": {"summary": "Health check del servicio"}},
+            "/api/models": {"get": {"summary": "Informacion de los modelos entrenados"}},
+            "/api/predict": {"post": {"summary": "Predecir fugas en tuberias"}},
+            "/api/batch": {"post": {"summary": "Analisis por lotes de lecturas de tuberias"}},
+        }
+    })
+
+
 if __name__ == "__main__":
     print("=" * 60)
     print("  Servidor Web - Deteccion de Fugas en Tuberias")
