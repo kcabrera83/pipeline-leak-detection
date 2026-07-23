@@ -1,4 +1,4 @@
-"""Servidor Flask para deteccion de fugas en tuberias."""
+"""Flask server for pipeline leak detection."""
 
 import sys
 from pathlib import Path
@@ -66,15 +66,15 @@ def api_predict():
             "status": "ok",
             "has_leak": bool(has_leak),
             "leak_probability": round(float(max(proba)), 4),
-            "leak_class": "FUGA DETECTADA" if has_leak else "SIN FUGA",
+            "leak_class": "LEAK DETECTED" if has_leak else "NO LEAK",
         }
 
         if has_leak:
             size_pred = float(size_est.predict(X)[0])
             result["leak_severity"] = (
-                "critica" if size_pred > 0.8 else
-                "alta" if size_pred > 0.5 else
-                "media" if size_pred > 0.3 else "baja"
+                "critical" if size_pred > 0.8 else
+                "high" if size_pred > 0.5 else
+                "medium" if size_pred > 0.3 else "low"
             )
             result["leak_size_score"] = round(size_pred, 4)
 
@@ -133,23 +133,23 @@ def api_health():
 def api_docs():
     return jsonify({
         "openapi": "3.0.0",
-        "info": {"title": "Pipeline Leak Detection - Deteccion de Fugas", "version": "1.0.0"},
+        "info": {"title": "Pipeline Leak Detection - Leak Detection", "version": "1.0.0"},
         "paths": {
-            "/": {"get": {"summary": "Dashboard principal"}},
-            "/api/health": {"get": {"summary": "Health check del servicio"}},
-            "/api/models": {"get": {"summary": "Informacion de los modelos entrenados"}},
-            "/api/predict": {"post": {"summary": "Predecir fugas en tuberias"}},
-            "/api/batch": {"post": {"summary": "Analisis por lotes de lecturas de tuberias"}},
+            "/": {"get": {"summary": "Main dashboard"}},
+            "/api/health": {"get": {"summary": "Service health check"}},
+            "/api/models": {"get": {"summary": "Information about trained models"}},
+            "/api/predict": {"post": {"summary": "Predict leaks in pipelines"}},
+            "/api/batch": {"post": {"summary": "Batch analysis of pipeline readings"}},
         }
     })
 
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("  Servidor Web - Deteccion de Fugas en Tuberias")
+    print("  Web Server - Pipeline Leak Detection")
     print("=" * 60)
-    print("  Cargando modelos...")
+    print("  Loading models...")
     get_models()
-    print("  Servidor iniciando en http://127.0.0.1:5005")
+    print("  Server starting on http://127.0.0.1:5005")
     print("=" * 60)
     app.run(host="0.0.0.0", port=5005, debug=True)

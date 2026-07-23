@@ -1,13 +1,13 @@
 # Pipeline Leak Detection
 
-Sistema ML para deteccion de fugas en tuberias de petroleo y gas usando sensores de presion, flujo, temperatura, vibracion y emision acustica.
+ML system for oil and gas pipeline leak detection using pressure, flow, temperature, vibration, and acoustic emission sensors.
 
-## Modelos
+## Models
 
-- **Leak Classifier**: Random Forest / Gradient Boosting para clasificar si hay fuga (si/no)
-- **Leak Size Estimator**: Gradient Boosting para estimar severidad de la fuga
+- **Leak Classifier**: Random Forest / Gradient Boosting to classify whether a leak exists (yes/no)
+- **Leak Size Estimator**: Gradient Boosting to estimate leak severity
 
-## Uso
+## Usage
 
 ```bash
 pip install -r requirements.txt
@@ -19,19 +19,19 @@ Dashboard: http://127.0.0.1:5005
 
 ### Endpoints
 
-| Metodo | Ruta | Descripcion |
-|--------|------|-------------|
-| GET | `/` | Dashboard web |
-| POST | `/api/predict` | Detectar fuga individual |
-| POST | `/api/batch` | Detectar fugas en lote |
-| GET | `/api/models` | Info de modelos |
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/` | Web dashboard |
+| POST | `/api/predict` | Detect individual leak |
+| POST | `/api/batch` | Batch leak detection |
+| GET | `/api/models` | Model info |
 | GET | `/api/health` | Health check |
 
-## Features del Modelo
+## Model Features
 
-- Presion upstream/downstream y caudal
-- Emision acustica y vibracion
-- Diferencia de temperatura
-- Humedad del suelo y tipo de tuberia
+- Upstream/downstream pressure and flow rate
+- Acoustic emission and vibration
+- Temperature difference
+- Soil moisture and pipeline type
 
 Elaborado por Ing. Kelvin Cabrera
