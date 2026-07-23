@@ -1,12 +1,13 @@
-"""Tests de API para pipeline-leak-detection."""
+"""Tests for pipeline-leak-detection API."""
 
 import sys
 import json
 
 sys.path.insert(0, ".")
 from app import app
+from fastapi.testclient import TestClient
 
-client = app.test_client()
+client = TestClient(app)
 PASSED = 0
 FAILED = 0
 
@@ -18,7 +19,7 @@ def test(name, method, url, body=None, expect_status=200):
             resp = client.get(url)
         else:
             resp = client.post(url, json=body)
-        data = json.loads(resp.data)
+        data = resp.json()
         ok = resp.status_code == expect_status and data.get("status") == "ok"
         if ok:
             PASSED += 1
@@ -43,7 +44,7 @@ def main():
         "pipe_wall_thickness_mm": 12, "pressure_drop_mpa": 0.5, "flow_anomaly_m3h": 0,
         "acoustic_emission_db": 8, "temperature_diff_c": 0.5, "vibration_level_g": 0.2,
     })
-    print(f"\n  Resultado: {PASSED}/{PASSED+FAILED} tests pasaron")
+    print(f"\n  Result: {PASSED}/{PASSED+FAILED} tests passed")
     print("=" * 60)
     return 0 if FAILED == 0 else 1
 
