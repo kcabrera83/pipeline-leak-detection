@@ -101,11 +101,12 @@ async def api_predict(request: LeakPredictRequest):
         }
         if has_leak:
             size_pred = float(models["size_estimator"].predict(X)[0])
-            result["leak_severity"] = (
-                "critical" if size_pred > 0.8 else
-                "high" if size_pred > 0.5 else
-                "medium" if size_pred > 0.3 else "low"
-            )
+            size_rounded = round(size_pred)
+            size_map = {0: "no_leak", 1: "small", 2: "medium", 3: "large"}
+            severity_map = {0: "low", 1: "low", 2: "medium", 3: "critical"}
+            leak_size_label = size_map.get(size_rounded, "unknown")
+            result["leak_severity"] = severity_map.get(size_rounded, "unknown")
+            result["leak_size"] = leak_size_label
             result["leak_size_score"] = round(size_pred, 4)
         return result
     except Exception as e:

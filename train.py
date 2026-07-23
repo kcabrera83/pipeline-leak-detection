@@ -11,6 +11,9 @@ from pipeline_leak.models.leak_size_estimator import LeakSizeEstimator
 from scipy import stats
 
 
+LEAK_SIZE_MAP = {"none": 0, "small": 1, "medium": 2, "large": 3}
+
+
 def grubbs_test(data, threshold=0.05):
     n = len(data)
     mean = np.mean(data)
@@ -25,7 +28,7 @@ def grubbs_test(data, threshold=0.05):
 
 def main():
     print("=" * 60)
-    print("  Pipeline Leak Detection - PyOD + scipy.stats")
+    print("  Pipeline Leak Detection - Supervised Training")
     print("=" * 60)
 
     print("\n[1/5] Generating synthetic data...")
@@ -37,12 +40,15 @@ def main():
     preprocessor = PipelinePreprocessor()
     X = preprocessor.fit_transform(df)
     y_leak = df["has_leak"].values
-    y_size = df.loc[df["has_leak"] == 1, "pressure_drop_mpa"].values
-    X_leak = X[df["has_leak"] == 1]
+    leak_size_numeric = df["leak_size"].map(LEAK_SIZE_MAP).values
 
     split = int(0.8 * len(df))
     X_train, X_test = X[:split], X[split:]
     y_leak_train, y_leak_test = y_leak[:split], y_leak[split:]
+
+    leak_mask = df["has_leak"] == 1
+    X_leak = X[leak_mask]
+    y_size = leak_size_numeric[leak_mask]
 
     split_size = int(0.8 * len(X_leak))
     X_size_train, X_size_test = X_leak[:split_size], X_leak[split_size:]
@@ -51,15 +57,15 @@ def main():
     print(f"  Train: {split} | Test: {len(df) - split}")
     print(f"  Leak samples: {len(X_leak)} (train: {split_size}, test: {len(X_leak) - split_size})")
 
-    print("\n[3/5] Training leak classifier (PyOD ensemble)...")
+    print("\n[3/5] Training leak classifier (supervised ensemble)...")
     classifier = LeakClassifier()
     cls_results = classifier.train(X_train, y_leak_train)
     cls_eval = classifier.evaluate(X_test, y_leak_test)
-    print(f"  Best detector: {classifier.best_name}")
+    print(f"  Best model: {classifier.best_name}")
     print(f"  Train Accuracy: {cls_results[classifier.best_name]['accuracy']:.4f}")
     print(f"  Test  Accuracy: {cls_eval['accuracy']:.4f}")
 
-    print("\n[4/5] Training leak size estimator (PyOD AutoEncoder)...")
+    print("\n[4/5] Training leak size estimator (gradient boosting regressor)...")
     size_est = LeakSizeEstimator()
     size_results = size_est.train(X_size_train, y_size_train)
     size_eval = size_est.evaluate(X_size_test, y_size_test)
