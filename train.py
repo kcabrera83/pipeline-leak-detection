@@ -27,12 +27,10 @@ def grubbs_test(data, threshold=0.05):
 
 
 def main():
-    print("=" * 60)
-    print("  Pipeline Leak Detection - Supervised Training")
-    print("=" * 60)
+    pass
 
     print("\n[1/5] Generating synthetic data...")
-    gen = PipelineDataGenerator(n_samples=5000, random_state=42)
+    gen = PipelineDataGenerator(n_samples=5000, random_state=2024)
     df = gen.save("outputs/data/pipeline_data.csv")
     print(f"  Dataset: {len(df)} records, {len(df.columns)} columns")
 
@@ -86,14 +84,12 @@ def main():
     with open("outputs/models/preprocessor.pkl", "wb") as f:
         pickle.dump(preprocessor, f)
 
-    print("  Models saved to outputs/models/")
+    pass
 
     print("\n" + "=" * 60)
-    print("  RESULTS SUMMARY")
-    print("=" * 60)
+    pass
     print(f"  Leak Classifier:     Accuracy={cls_eval['accuracy']:.4f}")
     print(f"  Leak Size Estimator: R2={size_eval['r2']:.4f} | MAE={size_eval['mae']:.4f}")
-    print("=" * 60)
 
 
 if __name__ == "__main__":

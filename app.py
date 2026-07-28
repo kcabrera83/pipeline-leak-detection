@@ -1,11 +1,9 @@
-"""FastAPI web server for pipeline leak detection."""
-
 import pickle
 import sys
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+import sys; sys.path.append(str(Path(__file__).resolve().parent))
 
 import numpy as np
 import pandas as pd
@@ -17,7 +15,7 @@ from pydantic import BaseModel
 app = FastAPI(
     title="Pipeline Leak Detection",
     description="Pipeline leak classification, severity estimation, and batch analysis",
-    version="1.0.0",
+    version="0.1",
 )
 
 app.add_middleware(

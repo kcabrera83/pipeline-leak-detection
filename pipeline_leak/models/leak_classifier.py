@@ -8,10 +8,10 @@ class LeakClassifier:
     def __init__(self):
         self.models = {
             "random_forest": RandomForestClassifier(
-                n_estimators=100, max_depth=10, random_state=42, n_jobs=-1,
+                n_estimators=100, max_depth=10, random_state=2024, n_jobs=-1,
             ),
             "gradient_boosting": GradientBoostingClassifier(
-                n_estimators=100, max_depth=5, learning_rate=0.1, random_state=42,
+                n_estimators=100, max_depth=5, learning_rate=0.1, random_state=2024,
             ),
         }
         self.best_model = None

@@ -1,5 +1,3 @@
-"""Tests for pipeline-leak-detection API."""
-
 import sys
 import json
 
@@ -32,9 +30,7 @@ def test(name, method, url, body=None, expect_status=200):
 
 
 def main():
-    print("=" * 60)
-    print("  Tests - Pipeline Leak Detection")
-    print("=" * 60)
+    pass
     test("GET /api/health", "GET", "/api/health")
     test("GET /api/models", "GET", "/api/models")
     test("POST /api/predict (no leak)", "POST", "/api/predict", {
@@ -45,7 +41,6 @@ def main():
         "acoustic_emission_db": 8, "temperature_diff_c": 0.5, "vibration_level_g": 0.2,
     })
     print(f"\n  Result: {PASSED}/{PASSED+FAILED} tests passed")
-    print("=" * 60)
     return 0 if FAILED == 0 else 1
 
 

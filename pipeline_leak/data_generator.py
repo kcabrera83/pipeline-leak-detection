@@ -1,5 +1,3 @@
-"""Generador de datos sinteticos para deteccion de fugas en tuberias."""
-
 import numpy as np
 import pandas as pd
 
@@ -8,7 +6,7 @@ class PipelineDataGenerator:
     PIPELINE_TYPES = ["crude_oil", "natural_gas", "refined_product", "water_injection"]
     LEAK_SIZES = ["none", "small", "medium", "large"]
 
-    def __init__(self, n_samples=5000, random_state=42):
+    def __init__(self, n_samples=5000, random_state=2024):
         self.n_samples = n_samples
         self.rng = np.random.RandomState(random_state)
 

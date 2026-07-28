@@ -7,7 +7,7 @@ import pickle
 class LeakSizeEstimator:
     def __init__(self):
         self.model = GradientBoostingRegressor(
-            n_estimators=100, max_depth=5, learning_rate=0.1, random_state=42,
+            n_estimators=100, max_depth=5, learning_rate=0.1, random_state=2024,
         )
         self.trained = False
 
