@@ -92,5 +92,5 @@ def main():
     print(f"  Leak Size Estimator: R2={size_eval['r2']:.4f} | MAE={size_eval['mae']:.4f}")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
