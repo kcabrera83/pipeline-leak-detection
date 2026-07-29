@@ -1,144 +1,31 @@
-import pickle
-import sys
-from pathlib import Path
-from typing import Any
 
-import sys; sys.path.append(str(Path(__file__).resolve().parent))
-
-import numpy as np
-import pandas as pd
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from prometheus_fastapi_instrumentator import Instrumentator
+import asyncio
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import HTTPBearer
 from pydantic import BaseModel
+import numpy as np
+import joblib, os
 
-app = FastAPI(
-    title="Pipeline Leak Detection",
-    description="Pipeline leak classification, severity estimation, and batch analysis",
-    version="0.1",
-)
+app = FastAPI(title="Pipeline Leak Detection")
+security = HTTPBearer()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+SERVICES = {}
+for f in os.listdir("outputs/models"):
+    if f.endswith(".pkl"):
+        SERVICES[f.replace(".pkl", "")] = joblib.load(os.path.join("outputs/models", f))
 
-Instrumentator().instrument(app).expose(app)
+@app.get("/")
+async def root():
+    return {"service": "Pipeline Leak Detection", "endpoints": list(SERVICES.keys())}
 
-models: dict[str, Any] = {}
-
-
-@app.on_event("startup")
-async def load_models():
-    from pipeline_leak.models.leak_classifier import LeakClassifier
-    from pipeline_leak.models.leak_size_estimator import LeakSizeEstimator
-    try:
-        models["classifier"] = LeakClassifier.load("outputs/models/leak_classifier.pkl")
-        models["size_estimator"] = LeakSizeEstimator.load("outputs/models/leak_size_estimator.pkl")
-        with open("outputs/models/preprocessor.pkl", "rb") as f:
-            models["preprocessor"] = pickle.load(f)
-    except Exception as e:
-        print(f"  Error loading models: {e}")
-
-
-class LeakPredictRequest(BaseModel):
-    pipeline_type: str = "crude_oil"
-    pipeline_length_km: float = 50.0
-    pipeline_diameter_mm: float = 200.0
-    pressure_upstream_mpa: float = 5.0
-    pressure_downstream_mpa: float = 4.0
-    flow_rate_m3h: float = 200.0
-    temperature_c: float = 25.0
-    ambient_temp_c: float = 20.0
-    soil_moisture_pct: float = 40.0
-    pipe_wall_thickness_mm: float = 12.0
-    pressure_drop_mpa: float = 1.0
-    flow_anomaly_m3h: float = 0.0
-    acoustic_emission_db: float = 10.0
-    temperature_diff_c: float = 1.0
-    vibration_level_g: float = 0.3
-
-
-class BatchReadings(BaseModel):
-    readings: list[dict]
-
-
-@app.get("/api/health")
-async def health():
-    return {"status": "ok", "service": "pipeline-leak-detection"}
-
-
-@app.get("/api/models")
-async def api_models():
-    if "classifier" not in models:
-        raise HTTPException(status_code=503, detail="Models not loaded")
-    return {
-        "status": "ok",
-        "classifier": models["classifier"].best_name,
-        "size_estimator": "trained" if models["size_estimator"].trained else "not_trained",
-    }
-
-
-@app.post("/api/predict")
-async def api_predict(request: LeakPredictRequest):
-    if not all(k in models for k in ("classifier", "size_estimator", "preprocessor")):
-        raise HTTPException(status_code=503, detail="Models not loaded")
-    try:
-        df = pd.DataFrame([request.model_dump()])
-        X = models["preprocessor"].transform(df)
-        has_leak = int(models["classifier"].predict(X)[0])
-        proba = models["classifier"].predict_proba(X)[0]
-        result = {
-            "status": "ok",
-            "has_leak": bool(has_leak),
-            "leak_probability": round(float(max(proba)), 4),
-            "leak_class": "LEAK DETECTED" if has_leak else "NO LEAK",
-        }
-        if has_leak:
-            size_pred = float(models["size_estimator"].predict(X)[0])
-            size_rounded = round(size_pred)
-            size_map = {0: "no_leak", 1: "small", 2: "medium", 3: "large"}
-            severity_map = {0: "low", 1: "low", 2: "medium", 3: "critical"}
-            leak_size_label = size_map.get(size_rounded, "unknown")
-            result["leak_severity"] = severity_map.get(size_rounded, "unknown")
-            result["leak_size"] = leak_size_label
-            result["leak_size_score"] = round(size_pred, 4)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.post("/api/batch")
-async def api_batch(request: BatchReadings):
-    if not all(k in models for k in ("classifier", "preprocessor")):
-        raise HTTPException(status_code=503, detail="Models not loaded")
-    try:
-        df = pd.DataFrame(request.readings)
-        X = models["preprocessor"].transform(df)
-        predictions = models["classifier"].predict(X)
-        probas = models["classifier"].predict_proba(X)
-        results = []
-        for i, (pred, prob) in enumerate(zip(predictions, probas)):
-            results.append({
-                "index": i,
-                "has_leak": bool(pred),
-                "leak_probability": round(float(max(prob)), 4),
-            })
-        leak_count = sum(1 for r in results if r["has_leak"])
-        return {
-            "status": "ok",
-            "total_readings": len(results),
-            "leaks_detected": leak_count,
-            "results": results,
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-if __name__ == '__main__':
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5005)
-
+@app.post("/invoke/{service_name}")
+async def invoke(service_name: str, body: dict, cred=Depends(security)):
+    svc = SERVICES.get(service_name)
+    if not svc:
+        raise HTTPException(404)
+    await asyncio.sleep(0.01)
+    feats = svc.get("feature_names", list(body.keys()))
+    X = np.array([body.get(f, 0) for f in feats]).reshape(1, -1)
+    if svc.get("scaler"):
+        X = svc["scaler"].transform(X)
+    return {"prediction": float(svc["model"].predict(X)[0])}
